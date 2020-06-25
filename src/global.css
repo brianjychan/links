@@ -1,0 +1,155 @@
+@font-face {
+    font-family: ano;
+    font-weight: 400;
+    font-style: normal;
+    src: url(assets/webfonts/35B735_1_0.eot);
+    src: url(assets/webfonts/35B735_1_0.eot?#iefix) format('embedded-opentype'), url(assets/webfonts/35B735_1_0.woff2) format('woff2'), url(assets/webfonts/35B735_1_0.woff) format('woff'), url(assets/webfonts/35B735_1_0.ttf) format('truetype')
+}
+
+.colorGray {
+    color: rgb(164, 164, 164);
+}
+
+body {
+    font: 18px/1.6 ano;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0;
+    font-weight: normal;
+    line-height: normal;
+}
+
+label {
+    font-weight: normal;
+    line-height: normal;
+}
+
+h1 {
+    font-size: 30px;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 20px;
+}
+
+h4 {
+    font-size: 18px;
+}
+
+h5 {
+    font-size: 14px;
+}
+
+span {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* input {
+    outline: 0px;
+    box-shadow: none !important;
+    background-color: transparent;
+    border: unset;
+    color: black;
+    border: none;
+    -webkit-appearance: none;
+} */
+
+.colorGray {
+    color: #8C8C8C;
+}
+
+.hoverLink:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.colorCharcoal {
+    color: rgb(140, 140, 140);
+}
+
+.colorGreen {
+    color: #398002;
+}
+
+.colorGold {
+    color: #FFDA6A
+}
+
+.colorDarkGold {
+    color: rgb(218, 164, 0)
+}
+
+.colorBlueLink {
+    color: rgb(0, 153, 255);
+}
+
+.colorBlueLink:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* Layout */
+
+.pageWindow {
+    padding: 5rem 10%;
+}
+
+.sectionWithMargin {
+    margin-top: 2rem;
+    margin-bottom: 3rem;
+}
+
+/* Modifiers */
+
+.italic {
+    font-style: italic;
+}
+
+.noPadding {
+    padding: 0;
+}
+
+.noPaddingLeft {
+    padding-left: 0;
+}
+
+.noPaddingRight {
+    padding-right: 0;
+}
+
+.noMargin {
+    margin: 0;
+}
+
+.hoverGray:hover {
+    cursor: pointer;
+    background-color: #F0F0F0;
+}
+
+/* Buttons */
+
+.actionButton {
+    background-color: rgb(157, 181, 242);
+    border: 2px solid rgb(157, 181, 242);
+    border-radius: 20px;
+    color: black;
+    font-family: 'Red Hat Text', sans-serif;
+    padding: .5rem 2rem;
+}
+
+.actionButtonHover:hover {
+    background-color: rgb(175, 197, 255);
+    border: 2px solid rgb(175, 197, 255);
+    cursor: pointer;
+}

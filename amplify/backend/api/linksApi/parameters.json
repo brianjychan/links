@@ -1,0 +1,11 @@
+{
+    "AppSyncApiName": "linksApi",
+    "DynamoDBBillingMode": "PAY_PER_REQUEST",
+    "DynamoDBEnableServerSideEncryption": "false",
+    "AuthCognitoUserPoolId": {
+        "Fn::GetAtt": [
+            "authlinksAuth",
+            "Outputs.UserPoolId"
+        ]
+    }
+}

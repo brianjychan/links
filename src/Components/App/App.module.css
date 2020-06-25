@@ -1,0 +1,87 @@
+.view {
+  padding: 2rem 4rem;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+.title {
+  margin-bottom: 3rem;
+}
+
+.post {
+  margin-bottom: 2rem;
+}
+
+.pageNum {
+  margin: 0 1rem;
+}
+
+.nav {
+  vertical-align: middle;
+  margin-bottom: 5rem;
+}
+
+.addPostArea {
+  margin-bottom: 5rem;
+}
+
+.addBox {
+  width: 80%;
+  padding: 1rem 1rem;
+  font-size: 18px;
+}
+
+.channelSelection {
+  margin-right: 1rem;
+  display: inline-block;
+  margin-top: 1rem;
+  width: 200px;
+  /* text-align: center; */
+}
+
+.pointer:hover {
+  cursor: pointer;
+}
+
+.src {
+  margin-top: 5rem
+}
+
+.login {
+  margin-top: 1rem;
+}
+
+.captionArea {
+  margin: .2rem 0;
+}
+
+.brianImg {
+  width: 2rem;
+  border-radius: 50%;
+  vertical-align: top;
+  margin-right: .7rem;
+}
+
+.caption {
+  font-size: 16px;
+  line-height: 2rem;
+  max-width: 700px;
+  margin: .5rem 0 .6rem;
+}
+
+.channelCode {
+  cursor: pointer;
+}
+
+.chosenChannelLabel {
+  margin-bottom: 1rem;
+}
+
+.cancelChannelFilter {
+  margin-left: .5rem;
+  cursor: pointer;
+}
+
+.noPosts {
+  margin-bottom: 3rem;
+}

@@ -1,0 +1,26 @@
+type Post
+  @model
+  @auth(
+    rules: [
+      { allow: public, provider: iam, operations: [read] }
+      { allow: private }
+    ]
+  )
+  @key(name: "ByTime", fields: ["type", "time"], queryField: "listPostsByTime")
+  @key(
+    name: "ByChannel"
+    fields: ["channelCode", "time"]
+    queryField: "listPostsByChannel"
+  ) {
+  id: ID!
+  time: Float
+
+  url: String!
+  title: String
+  desc: String
+  imgUrl: String
+
+  channelCode: String
+  caption: String
+  type: String
+}

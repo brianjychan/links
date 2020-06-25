@@ -1,0 +1,9 @@
+{
+    "permissions": {
+        "storage": {
+            "Post:@model(appsync)": [
+                "update"
+            ]
+        }
+    }
+}
