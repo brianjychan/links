@@ -4,9 +4,9 @@ import psl from 'psl'
 import { GraphQLResult } from '@aws-amplify/api'
 
 import { Post } from "../../models";
-import { createPost } from "../../graphql/mutations";
-import { ListPostsByTimeQuery, ModelSortDirection, ListPostsByChannelQuery } from "../../API";
-import { listPostsByTime, listPostsByChannel, } from '../../graphql/queries';
+import { createPost, updatePost, deletePost } from "../../graphql/mutations";
+import { GetPostQuery, ListPostsByTimeQuery, ModelSortDirection, ListPostsByChannelQuery } from "../../API";
+import { listPostsByTime, listPostsByChannel, getPost } from '../../graphql/queries';
 
 import { UtilityContext, Utility, useUtility } from "../Utility";
 import photo from '../../assets/photo.png'
@@ -77,195 +77,6 @@ const SECRET_CHANNELS = [
 ]
 
 const INIT_TIME = { start: Date.now() / 1000, end: Date.now() / 1000 }
-const App = () => {
-  const utility = useUtility()
-
-  // Inputs
-  const [timeBorders, setTimeBorders] = useState(INIT_TIME)
-  const [pageNum, setPageNum] = useState(0)
-  const [chosenChannelCode, setChosenChannelCode] = useState('')
-
-
-  // Data
-  const [posts, setPosts] = useState<Array<Post>>([]);
-  const [error, setError] = useState(false)
-  const [multiplePagesAvailable, setMultiplePagesAvailable] = useState(false)
-
-
-  // UI
-  const [choseAuthMode, setChoseAuthMode] = useState(false)
-  const [showAdd, setShowAdd] = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
-  const [firstLoadDone, setFirstLoadDone] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [noMorePosts, setNoMorePosts] = useState(false)
-
-
-  // Check Auth
-  useEffect(() => {
-    // Replace this string with your email 
-    const emailString = 'yourEmailHere@me.com'
-    const getUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser()
-        if (user.attributes.email === emailString) {
-          try {
-            posthog.identify('Me')
-            posthog.opt_out_capturing();
-          } catch (error) {
-            console.log(error)
-          }
-          Amplify.configure({
-            "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS",
-          });
-          setShowAdd(true)
-        }
-      } catch (error) {
-        console.log(error)
-      }
-      setChoseAuthMode(true)
-    }
-    getUser()
-  }, [])
-
-  const fetchPosts = useCallback(async (getEarlier: boolean, channelCode: string) => {
-    setLoading(true)
-    const ITEMS_TO_LOAD = 12
-
-    try {
-      const timeBounds = getEarlier ? { lt: timeBorders.start } : { gt: timeBorders.end }
-      const sortDirection = getEarlier ? ModelSortDirection.DESC : ModelSortDirection.ASC
-      let newPosts = []
-      if (channelCode) {
-        const postData = await API.graphql(graphqlOperation(listPostsByChannel, { channelCode, time: timeBounds, sortDirection, limit: ITEMS_TO_LOAD })) as GraphQLResult<ListPostsByChannelQuery>
-        newPosts = postData.data?.listPostsByChannel?.items as Array<Post>;
-        if (!postData.data?.listPostsByChannel?.nextToken && getEarlier) {
-          setNoMorePosts(true)
-        } else {
-          setNoMorePosts(false)
-          setMultiplePagesAvailable(true)
-        }
-      } else {
-        const postData = await API.graphql(graphqlOperation(listPostsByTime, { type: "link", time: timeBounds, sortDirection, limit: ITEMS_TO_LOAD })) as GraphQLResult<ListPostsByTimeQuery>
-        newPosts = postData.data?.listPostsByTime?.items as Array<Post>;
-        if (!postData.data?.listPostsByTime?.nextToken && getEarlier) {
-          setNoMorePosts(true)
-        } else {
-          setNoMorePosts(false)
-        }
-      }
-      if (newPosts.length) {
-        // Set Time Bounds
-        if (!getEarlier) {
-          // Since we're looking for later posts but retrieved them in ascending time, reverse
-          newPosts.reverse()
-        }
-        const earliestTime = newPosts[newPosts.length - 1].time as number
-        const latestTime = newPosts[0].time as number
-        const newBorders = { start: earliestTime, end: latestTime }
-        setTimeBorders(newBorders)
-        setPosts(newPosts);
-      } else {
-        const newBorders = { start: 0, end: timeBorders.start - .5 }
-        setTimeBorders(newBorders)
-        console.log('No posts')
-      }
-    } catch (err) {
-      console.log(err)
-      console.log("error fetching posts");
-      setError(true)
-    }
-    setLoading(false)
-  }, [timeBorders])
-
-  // First Load
-  useEffect(() => {
-    if (firstLoadDone || !choseAuthMode) {
-      return
-    }
-    setFirstLoadDone(true)
-    fetchPosts(true, chosenChannelCode)
-  }, [fetchPosts, firstLoadDone, choseAuthMode, chosenChannelCode]);
-
-
-  // Render the posts
-  const renderPosts = posts.map((post, index) => {
-    const { id, url, title, caption } = post
-    const time = (post.time as number) * 1000
-    const channelCode = post.channelCode as string
-
-    if ((SECRET_CHANNELS.includes(channelCode) && !showAdd)
-      || !url) {
-      return null
-    }
-
-    const domainName = psl.get(extractHostname(url))
-
-    const chooseChannelCode = () => {
-      setPosts([])
-      setPageNum(0)
-      setTimeBorders(INIT_TIME)
-      setFirstLoadDone(false)
-      setChosenChannelCode(channelCode)
-      setNoMorePosts(false)
-    }
-
-    return (
-      < div key={id ? id : index} className={styles.post} >
-        <p><a href={url} target="_blank" rel="noopener noreferrer">{title ? title : url}</a><span className="colorGray">&nbsp;&nbsp;&nbsp;({domainName})</span></p>
-        {caption &&
-          <p className={styles.caption}><img alt="brian-pic" src={photo} className={styles.brianImg} />{caption}</p>
-        }
-        <p className="colorGray">{utility.getTimeText(time)}&nbsp;&nbsp;-&nbsp;&nbsp;<span onClick={chooseChannelCode} className={styles.channelCode}>{CHANNEL_NAME_MAP[channelCode]}</span></p>
-      </div >
-    )
-  })
-
-  const loadNextPage = (getEarlier: boolean) => () => {
-    setPosts([])
-    setPageNum(prev => getEarlier ? prev + 1 : prev - 1)
-    fetchPosts(getEarlier, chosenChannelCode)
-  }
-
-  const cancelChosenChannel = () => {
-    setChosenChannelCode('')
-    setPosts([])
-    setPageNum(0)
-    setTimeBorders(INIT_TIME)
-    setFirstLoadDone(false)
-    setNoMorePosts(false)
-  }
-
-  return (
-    <>
-      {showAdd && <AddPostComponent />}
-      {chosenChannelCode && <p className={[styles.chosenChannelLabel,].join(' ')}>
-        <span className="colorGray">Viewing Tag:</span>
-        <span>&nbsp;&nbsp;{CHANNEL_NAME_MAP[chosenChannelCode]}</span>
-        <span className={[styles.cancelChannelFilter, "colorGray"].join(' ')} onClick={cancelChosenChannel}>&times;</span></p>}
-      {loading && <p className={"colorGray"}>Loading...</p>}
-      {renderPosts}
-      {!loading &&
-        <div>
-          {posts.length === 0 &&
-            <div className={styles.noPosts}>
-              <p className="colorGray">No more posts</p>
-            </div>
-          }
-          <div className={styles.nav}>
-            {pageNum > 0 && <button className="actionButton actionButtonHover" onClick={loadNextPage(false)}>Prev</button>}
-            {multiplePagesAvailable && <span className={["colorGray", styles.pageNum].join(' ')}>{pageNum + 1}</span>}
-            {!noMorePosts && <button className="actionButton actionButtonHover" onClick={loadNextPage(true)}>Next</button>}
-          </div>
-          <p className={[styles.src, "colorGray"].join(' ')}>Get a link feed like this for your own static site. It's <a target="_blank" rel="noopener noreferrer" href="https://github.com/brianjychan/linkfeed">open source</a></p>
-          {showLogin && <SignInComponent />}
-          <p onClick={() => { setShowLogin(true) }} className={[styles.login, "colorGray"].join(' ')}>© 2020</p>
-        </div>
-      }
-      {error && <p>Looks like something broke. Please send me a message!</p>}
-    </ >
-  );
-};
 
 const SignInComponent: React.FC = () => {
   const [inputs, setInputs] = useState({ email: '', pw: '' })
@@ -375,6 +186,302 @@ const AddPostComponent: React.FC = () => {
     </div>
   )
 }
+
+const App = () => {
+  const utility = useUtility()
+
+  // Inputs
+  const [timeBorders, setTimeBorders] = useState(INIT_TIME)
+  const [pageNum, setPageNum] = useState(0)
+  const [chosenChannelCode, setChosenChannelCode] = useState('')
+
+
+  // Data
+  const [feedPosts, setFeedPosts] = useState<Array<Post>>([]);
+  const [error, setError] = useState(false)
+  const [pinnedLink, setPinnedLink] = useState<Post>({} as Post)
+
+  // UI
+  const [choseAuthMode, setChoseAuthMode] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
+
+  const [firstLoadDone, setFirstLoadDone] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [pinnedLoading, setPinnedLoading] = useState(true)
+
+  const [noMorePosts, setNoMorePosts] = useState(false)
+
+
+  // Check Auth
+  useEffect(() => {
+    // Replace this string with your email 
+    const emailString = 'yourEmailHere@gmail.com'
+    const getUser = async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser()
+        if (user.attributes.email === emailString) {
+          try {
+            posthog.identify('Me')
+            posthog.opt_out_capturing();
+          } catch (error) {
+            console.log(error)
+          }
+          Amplify.configure({
+            "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS",
+          });
+          setShowAdd(true)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+      setChoseAuthMode(true)
+    }
+    getUser()
+  }, [])
+
+  // Get the Pinned post
+  const fetchPinned = useCallback(async () => {
+    try {
+      const pinnedData = await API.graphql(graphqlOperation(getPost, { id: 'pinned' })) as GraphQLResult<GetPostQuery>
+      const retrievedPinnedLink = pinnedData.data?.getPost as Post
+      if (retrievedPinnedLink) {
+        setPinnedLink(retrievedPinnedLink)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+    setPinnedLoading(false)
+  }, [])
+
+  const setPinned = useCallback(async (linkToPinData: Post) => {
+    try {
+      const newPinnedData: Post = {
+        url: linkToPinData.url,
+        caption: linkToPinData.caption,
+        channelCode: linkToPinData.channelCode,
+        type: linkToPinData.type,
+        time: linkToPinData.time,
+        title: linkToPinData.title,
+        imgUrl: linkToPinData.imgUrl,
+        desc: linkToPinData.desc,
+
+        id: 'pinned',
+
+      }
+      if (pinnedLink.id) {
+        // Reupload the previously pinned entry as a regular one
+        const oldPinnedData: Post = {
+          url: pinnedLink.url,
+          caption: pinnedLink.caption,
+          channelCode: pinnedLink.channelCode,
+          type: 'link',
+          time: pinnedLink.time,
+          title: pinnedLink.title,
+          imgUrl: pinnedLink.imgUrl,
+          desc: pinnedLink.desc,
+          id: ''
+        }
+        await API.graphql(graphqlOperation(createPost, { input: oldPinnedData }))
+        // Update the pinned entry
+        await API.graphql(graphqlOperation(updatePost, { input: newPinnedData }))
+      } else {
+        // No previously pinned entry, so just create a new one
+        await API.graphql(graphqlOperation(createPost, { input: newPinnedData }))
+      }
+      // Either way, delete the regular entry for the one we just pinned
+      await API.graphql(graphqlOperation(deletePost, { input: {id: linkToPinData.id} }))
+      setPinnedLink(linkToPinData)
+    } catch (error) {
+      console.log('Error pinning post')
+      console.error(error)
+    }
+  }, [pinnedLink])
+
+  const removePinned = useCallback(async () => {
+    try {
+      // Reupload the previously pinned entry as a regular one
+      const oldPinnedData: Post = {
+        url: pinnedLink.url,
+        caption: pinnedLink.caption,
+        channelCode: pinnedLink.channelCode,
+        type: 'link',
+        time: pinnedLink.time,
+        title: pinnedLink.title,
+        imgUrl: pinnedLink.imgUrl,
+        desc: pinnedLink.desc,
+        id: ''
+      }
+      await API.graphql(graphqlOperation(createPost, { input: oldPinnedData }))
+      // Delete the now-duplicate pinned entry
+      await API.graphql(graphqlOperation(deletePost, { input: { id: 'pinned' } }))
+      setPinnedLink({} as Post)
+      // Insert into posts
+    } catch (error) {
+      console.log(error)
+    }
+  }, [pinnedLink])
+
+  // Fetch posts of a certain pagination direction and channelCode
+  const fetchPosts = useCallback(async (getEarlier: boolean, channelCode: string) => {
+    setLoading(true)
+    const ITEMS_TO_LOAD = 12
+
+    try {
+      const timeBounds = getEarlier ? { lt: timeBorders.start } : { gt: timeBorders.end }
+      const sortDirection = getEarlier ? ModelSortDirection.DESC : ModelSortDirection.ASC
+      let newPosts = []
+      // Note that we repeat code based on if it's sorting by channelCode or not, keep in mind when editing
+      if (channelCode) {
+        const postData = await API.graphql(graphqlOperation(listPostsByChannel, { channelCode, time: timeBounds, sortDirection, limit: ITEMS_TO_LOAD })) as GraphQLResult<ListPostsByChannelQuery>
+        newPosts = postData.data?.listPostsByChannel?.items as Array<Post>;
+        if (!postData.data?.listPostsByChannel?.nextToken && getEarlier) {
+          setNoMorePosts(true)
+        } else {
+          setNoMorePosts(false)
+        }
+      } else {
+        const postData = await API.graphql(graphqlOperation(listPostsByTime, { type: "link", time: timeBounds, sortDirection, limit: ITEMS_TO_LOAD })) as GraphQLResult<ListPostsByTimeQuery>
+        newPosts = postData.data?.listPostsByTime?.items as Array<Post>;
+        if (!postData.data?.listPostsByTime?.nextToken && getEarlier) {
+          setNoMorePosts(true)
+        } else {
+          setNoMorePosts(false)
+        }
+      }
+      if (newPosts.length) {
+        // Set Time Bounds
+        if (!getEarlier) {
+          // Since we're looking for later posts but retrieved them in ascending time, reverse
+          newPosts.reverse()
+        }
+        const earliestTime = newPosts[newPosts.length - 1].time as number
+        const latestTime = newPosts[0].time as number
+        const newBorders = { start: earliestTime, end: latestTime }
+        setTimeBorders(newBorders)
+        setFeedPosts(newPosts);
+      } else {
+        const newBorders = { start: 0, end: timeBorders.start - .5 }
+        setTimeBorders(newBorders)
+        console.log('No posts')
+      }
+    } catch (err) {
+      console.log(err)
+      console.log("error fetching posts");
+      setError(true)
+    }
+    setLoading(false)
+  }, [timeBorders])
+
+  // Initiate First Load
+  useEffect(() => {
+    if (firstLoadDone || !choseAuthMode) {
+      return
+    }
+    setFirstLoadDone(true)
+    fetchPosts(true, chosenChannelCode)
+    fetchPinned()
+  }, [firstLoadDone, choseAuthMode, chosenChannelCode, fetchPinned, fetchPosts]);
+
+  // Render the posts
+  const renderPosts = (postsArray: Array<Post>, mode: string) => {
+    return postsArray.map((post: Post, index: number) => {
+      const { id, url, title, caption } = post
+      const channelCode = post.channelCode as string
+      const time = (post.time as number) * 1000
+      const domainName = psl.get(extractHostname(url))
+      if ((SECRET_CHANNELS.includes(channelCode) && !showAdd)
+        || !url
+        || (mode === "feed" && (id === 'pinned' || post.time === pinnedLink.time))
+      ) {
+        return null
+      }
+      const chooseChannelCode = () => {
+        setFeedPosts([])
+        setPageNum(0)
+        setTimeBorders(INIT_TIME)
+        setFirstLoadDone(false)
+        setChosenChannelCode(channelCode)
+        setNoMorePosts(false)
+      }
+      return (
+        <div key={id ? id : index} className={styles.post} >
+          {mode === 'pinned' && <p className="colorGray">Pinned</p>}
+          <p><a href={url} target="_blank" rel="noopener noreferrer">{title ? title : url}</a><span className="colorGray">&nbsp;&nbsp;&nbsp;({domainName})</span></p>
+          {caption &&
+            <p className={styles.caption}><img alt="brian-pic" src={photo} className={styles.brianImg} />{caption}</p>
+          }
+          <p className="colorGray">
+            {utility.getTimeText(time)}&nbsp;&nbsp;-&nbsp;&nbsp;
+          <span onClick={chooseChannelCode} className={styles.channelCode}>{CHANNEL_NAME_MAP[channelCode]}</span>
+            {showAdd &&
+              (mode === 'pinned' ?
+              <span onClick={() => { removePinned() }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Unpin</span>
+              :
+              <span onClick={() => { setPinned(post) }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Pin</span>)
+            }
+
+          </p>
+        </div >
+      )
+    })
+  }
+
+
+  const loadNextPage = (getEarlier: boolean) => () => {
+    setFeedPosts([])
+    setPageNum(prev => getEarlier ? prev + 1 : prev - 1)
+    fetchPosts(getEarlier, chosenChannelCode)
+  }
+
+  const cancelChosenChannel = () => {
+    setChosenChannelCode('')
+    setFeedPosts([])
+    setPageNum(0)
+    setTimeBorders(INIT_TIME)
+    setFirstLoadDone(false)
+    setNoMorePosts(false)
+  }
+
+  const showLoading = loading || pinnedLoading
+
+  return (
+    <>
+      {showAdd && <AddPostComponent />}
+      {chosenChannelCode && <p className={[styles.chosenChannelLabel,].join(' ')}>
+        <span className="colorGray">Viewing Tag:</span>
+        <span>&nbsp;&nbsp;{CHANNEL_NAME_MAP[chosenChannelCode]}</span>
+        <span className={[styles.cancelChannelFilter, "colorGray"].join(' ')} onClick={cancelChosenChannel}>&times;</span></p>}
+      {showLoading && <p className={"colorGray"}>Loading...</p>}
+      {!showLoading &&
+        <div>
+          {pinnedLink.id && pageNum === 0 &&
+            (!chosenChannelCode || (chosenChannelCode && chosenChannelCode === pinnedLink.channelCode)) &&
+            <div className={styles.pinnedHolder}>
+              {renderPosts([pinnedLink], 'pinned')}
+            </div>}
+          {renderPosts(feedPosts, 'feed')}
+          {feedPosts.length === 0 &&
+            <div className={styles.noPosts}>
+              <p className="colorGray">No more posts</p>
+            </div>
+          }
+          <div className={styles.nav}>
+            {pageNum > 0 && <button className="actionButton actionButtonHover" onClick={loadNextPage(false)}>Prev</button>}
+            {(!noMorePosts && pageNum === 0) && <span className={["colorGray", styles.pageNum].join(' ')}>{pageNum + 1}</span>}
+            {!noMorePosts && <button className="actionButton actionButtonHover" onClick={loadNextPage(true)}>Next</button>}
+          </div>
+          <p className={[styles.src, "colorGray"].join(' ')}>Get a link feed like this for your own static site. It's <a target="_blank" rel="noopener noreferrer" href="https://github.com/brianjychan/linkfeed">open source</a></p>
+          {showLogin && <SignInComponent />}
+          <p onClick={() => { setShowLogin(true) }} className={[styles.login, "colorGray"].join(' ')}>© 2020</p>
+        </div>
+      }
+      {error && <p>Looks like something broke. Please send me a message!</p>}
+    </ >
+  );
+};
+
+
 
 const AppWithProviders: React.FC = () => {
   const [posthogLoaded, setPosthogLoaded] = useState<any>(false)
