@@ -85,3 +85,16 @@
 .noPosts {
   margin-bottom: 3rem;
 }
+
+.pinButton {
+  display: none;
+}
+
+.post:hover .pinButton {
+  display: inline;
+  cursor: pointer;
+}
+
+.pinnedHolder {
+  margin-bottom: 3rem;
+}

@@ -25,14 +25,14 @@ Start at the root of your GH pages site (which also has `_posts` and `_site`)
 
 0. Fork this repo.
 
-   - Press Fork on the upper right of this repo, `https://github.com/brianjychan/linkfeed.git`.
+   - Press Fork on the upper right of this repo, `https://github.com/brianjychan/linkfeed.git`. Later, this is done to easily designate this project as a submodule of your parent directory (with your main website)
    - On your local machine, `cd` to the root of your website repository. If you're using Github Pages, this is the directory that contains `_site` and `_posts`.
    - Clone your forked repo. Run `$ git clone https://github.com/{username}/linkfeed.git`, replacing {username} with your GH username.
    - Change to the directory, `$ cd linkfeed`
 
 1. Install the [aws amplify CLI](https://docs.amplify.aws/cli/start/install)
 
-2. Create a new AWS IAM user. This keeps permission and security from any of your other AWS projects. This new profile's access keys are saved locally in `~/.aws`.
+2. Now we will create a new AWS IAM user. This keeps permission and security from any of your other AWS projects.
 
    - `$ amplify configure`
    - Sign in to your AWS account.
@@ -42,7 +42,7 @@ Start at the root of your GH pages site (which also has `_posts` and `_site`)
    - ? accessKeyId: Get this from the above page.
    - ? secretAccessKey: Get this from the above page.
    - ? Profile Name: Enter the same username with which you responded to "user name: " (in our case `linkfeed-iam-user`). This is what this IAM role is saved under locally.
-   - Now you've set your amplify CLI up to have access keys for a specific role within your AWS account.
+   - Now you've set your amplify CLI up to have access keys for a specific role within your AWS account. This new profile's access keys are saved locally in `~/.aws`
 
 3) Create/initialize the Amplify project in AWS.
 
@@ -101,7 +101,7 @@ Your backend works now, so it's time for you to be able to use it. We'll be work
 3. To test locally, build your jekyll site. `$ jekyll serve` (this is what github pages does). Use the app at the `/links` path
 4. Commit and push the entire website repo (with `_site`, `_posts`, and now `links`) to Github.
    - If you're setting up your Github Pages site / Jekyll for the first time, you can follow [this guide](https://help.github.com/en/github/working-with-github-pages/creating-a-github-pages-site-with-jekyll).
-5. On the production version of your site,  navigate to the `/links` path to use the app. This is where you can save links from now on.
+5. On the production version of your site, navigate to the `/links` path to use the app. This is where you can save links from now on.
    - Sign in by clicking the "© 2020" at the bottom of the screen.
    - Refresh the page after pressing Sign In.
    - Enjoy your site. Save and comment whatever you want
@@ -115,7 +115,6 @@ Table of Contents
 
 ### D. Using the site
 
-
 0. Sharing a link:
 
    - Share your link in the first box. If you want to post it with a comment, type it out in the second box.
@@ -123,11 +122,13 @@ Table of Contents
    - You need to refresh the page to see your newly added link
    - An asynchronous Lambda function listens to edits to the DDB, and then retrieves the title for any new links--you'll see it update in a few seconds. It sometimes fails with links from Twitter or Youtube, probably due to rate throttling on the Lambda function's IP address.
 
-2. Adding a channel: in `App.tsx`, channels are hardcoded as magic values. So (at the moment), you can only add a channel
+1. Adding a channel: in `App.tsx`, channels are hardcoded as magic values. So (at the moment), you can only add a channel
 
-3. Sorting by Channel: Click a channel name under a link to view only links from that channel.
+2. Sorting by Channel: Click a channel name under a link to view only links from that channel.
 
-4. Pagination - This react App doesn't paginate or remember navigation history like Reddit or Hacker News, so pressing "Previous" or "Next" and using your browser's Back button will leave the website. You also can't share the URL to navigate to a specific page of results.
+3. Pagination - This react App doesn't paginate or remember navigation history like Reddit or Hacker News, so pressing "Previous" or "Next" and using your browser's Back button will leave the website. You also can't share the URL to navigate to a specific page of results.
+
+4. Pinning Links - Hover over a link and press "Pin" to pin it to the top of the first page. You can also "unpin" the currently pinned link. Refresh page to see updates
 
 5. Bugs - Avoid posting non links; they'll be added to the page and then act as weird Anchor links to nothing
 
