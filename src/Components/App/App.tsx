@@ -290,7 +290,7 @@ const App = () => {
         await API.graphql(graphqlOperation(createPost, { input: newPinnedData }))
       }
       // Either way, delete the regular entry for the one we just pinned
-      await API.graphql(graphqlOperation(deletePost, { input: {id: linkToPinData.id} }))
+      await API.graphql(graphqlOperation(deletePost, { input: { id: linkToPinData.id } }))
       setPinnedLink(linkToPinData)
     } catch (error) {
       console.log('Error pinning post')
@@ -406,7 +406,7 @@ const App = () => {
       }
       return (
         <div key={id ? id : index} className={styles.post} >
-          {mode === 'pinned' && <p className="colorGray">Pinned</p>}
+          {mode === 'pinned' && <p className={["colorGray", styles.pinnedLabel].join(' ')}>Pinned</p>}
           <p><a href={url} target="_blank" rel="noopener noreferrer">{title ? title : url}</a><span className="colorGray">&nbsp;&nbsp;&nbsp;({domainName})</span></p>
           {caption &&
             <p className={styles.caption}><img alt="brian-pic" src={photo} className={styles.brianImg} />{caption}</p>
@@ -416,9 +416,9 @@ const App = () => {
           <span onClick={chooseChannelCode} className={styles.channelCode}>{CHANNEL_NAME_MAP[channelCode]}</span>
             {showAdd &&
               (mode === 'pinned' ?
-              <span onClick={() => { removePinned() }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Unpin</span>
-              :
-              <span onClick={() => { setPinned(post) }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Pin</span>)
+                <span onClick={() => { removePinned() }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Unpin</span>
+                :
+                <span onClick={() => { setPinned(post) }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Pin</span>)
             }
 
           </p>
@@ -459,6 +459,7 @@ const App = () => {
             (!chosenChannelCode || (chosenChannelCode && chosenChannelCode === pinnedLink.channelCode)) &&
             <div className={styles.pinnedHolder}>
               {renderPosts([pinnedLink], 'pinned')}
+              <div className={styles.pinnedSeparator} />
             </div>}
           {renderPosts(feedPosts, 'feed')}
           {feedPosts.length === 0 &&
