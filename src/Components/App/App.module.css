@@ -98,3 +98,13 @@
 .pinnedHolder {
   margin-bottom: 3rem;
 }
+
+.pinnedSeparator {
+  background-color: rgb(196, 196, 196);
+  width: 10rem;
+  height: .15rem;
+}
+
+.pinnedLabel {
+  margin-bottom: .3rem;
+}
