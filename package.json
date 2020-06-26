@@ -2,6 +2,7 @@
   "name": "links",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://yourdomain.com/links",
   "dependencies": {
     "@aws-amplify/ui-react": "^0.2.7",
     "@testing-library/jest-dom": "^4.2.4",
@@ -25,7 +26,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && rm -rf ../static && rm -rf ../links && mv build/static ../static && mv build ../links",
+    "build": "react-scripts build && rm -rf ../links && mv build ../links",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
