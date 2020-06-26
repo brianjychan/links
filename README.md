@@ -87,8 +87,13 @@ Your backend works now, so it's time for you to be able to use it. We'll be work
    - If you want some channels to be private (links in them are only visible when logged in as you), add those channel codes to the `SECRET_CHANNELS` array. Note that this was quickly implemented by being filtered by the **client's browser**, so it's technically insecure. Use at your own discretion. We will update this soon.
    - Feel free to change the title, description, [opengraph tags](https://ogp.me/), etc. in `public/index.html`
    - If you want, don't forget to add a link to the `/links` path your from your homepage.
-7. If you want the path to your app to be something other than `https://yourdomain.com/links`, edit the word `links` in `linkfeed/package.json` to be your desired path.
-   - For instance, if you want it to be `https://yourdomain.com/urls`, you would change the command to: `react-scripts build && rm -rf ../static && rm -rf ../urls && mv build/static ../static && mv build ../urls`
+7. Edit `linkfeed/package.json` settings to fit your site.
+   - In the `homepage: ` field, replace `yourdomain.com` with your website details
+   - If you want the path to your app to be something other than `/links`, edit the word `links` in the `homepage` and `scripts: build:` fields. For example, if you want it to be `/urls`:
+      - the `homepage: ` value should be `https://yourdomain.com/urls`
+      - the `scripts:build:` command should be `react-scripts build && rm -rf ../urls && mv build ../urls`
+   - See the [CRA docs](https://create-react-app.dev/docs/deployment/#building-for-relative-paths) for more info
+   - If you're NOT using Jekyll or Github Pages, just make sure that the `build` folder ends up as a folder under your site root, with its name set as whatever you want the app's path on your website to be.
 
 ### C. Build and Deploy
 
