@@ -52,25 +52,44 @@
 }
 
 .captionArea {
-  margin: .2rem 0;
-}
-
-.brianImg {
-  width: 2rem;
-  border-radius: 50%;
-  vertical-align: top;
-  margin-right: .7rem;
-}
-
-.caption {
+  display: flex;
+  margin: .5rem 0 .6rem;
   font-size: 16px;
   line-height: 2rem;
+}
+
+.photo {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  vertical-align: top;
+  margin-right: .5rem;
+}
+
+.captionHolder {
   max-width: 700px;
-  margin: .5rem 0 .6rem;
+}
+
+.truncatedCaption {
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  /* number of lines to show */
+  -webkit-box-orient: vertical;
+}
+
+.moreButton {
+  cursor: pointer;
 }
 
 .channelCode {
   cursor: pointer;
+}
+
+.channelCode:hover {
+  color: black;
 }
 
 .chosenChannelLabel {
@@ -93,6 +112,10 @@
 .post:hover .pinButton {
   display: inline;
   cursor: pointer;
+}
+
+.pinButton:hover {
+  color: black
 }
 
 .pinnedHolder {

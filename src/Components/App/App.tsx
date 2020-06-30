@@ -187,6 +187,15 @@ const AddPostComponent: React.FC = () => {
   )
 }
 
+interface LinkItemProps {
+  mode: string;
+  post: Post;
+  index: number;
+}
+
+
+
+
 const App = () => {
   const utility = useUtility()
 
@@ -211,34 +220,6 @@ const App = () => {
   const [pinnedLoading, setPinnedLoading] = useState(true)
 
   const [noMorePosts, setNoMorePosts] = useState(false)
-
-
-  // Check Auth
-  useEffect(() => {
-    // Replace this string with your email 
-    const emailString = 'yourEmailHere@gmail.com'
-    const getUser = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser()
-        if (user.attributes.email === emailString) {
-          try {
-            posthog.identify('Me')
-            posthog.opt_out_capturing();
-          } catch (error) {
-            console.log(error)
-          }
-          Amplify.configure({
-            "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS",
-          });
-          setShowAdd(true)
-        }
-      } catch (error) {
-        console.log(error)
-      }
-      setChoseAuthMode(true)
-    }
-    getUser()
-  }, [])
 
   // Get the Pinned post
   const fetchPinned = useCallback(async () => {
@@ -373,6 +354,33 @@ const App = () => {
     setLoading(false)
   }, [timeBorders])
 
+  // Check Auth
+  useEffect(() => {
+    // Replace this string with your email 
+    const emailString = 'yourEmailHere@gmail.com'
+    const getUser = async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser()
+        if (user.attributes.email === emailString) {
+          try {
+            posthog.identify('Me')
+            posthog.opt_out_capturing();
+          } catch (error) {
+            console.log(error)
+          }
+          Amplify.configure({
+            "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS",
+          });
+          setShowAdd(true)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+      setChoseAuthMode(true)
+    }
+    getUser()
+  }, [])
+
   // Initiate First Load
   useEffect(() => {
     if (firstLoadDone || !choseAuthMode) {
@@ -383,48 +391,80 @@ const App = () => {
     fetchPinned()
   }, [firstLoadDone, choseAuthMode, chosenChannelCode, fetchPinned, fetchPosts]);
 
+  const LinkItem: React.FC<LinkItemProps> = ({ post, mode, index }) => {
+    const [expanded, setExpanded] = useState(false)
+
+    const { id, url, title, caption } = post
+
+    const channelCode = post.channelCode as string
+    const time = (post.time as number) * 1000
+    const domainName = psl.get(extractHostname(url))
+
+    // Please refer to the README; this client-side filtering is NOT secure.
+    if ((SECRET_CHANNELS.includes(channelCode) && !showAdd)
+      || !url
+      || (mode === "feed" && (id === 'pinned' || post.time === pinnedLink.time))
+    ) {
+      return null
+    }
+
+    const chooseChannelCode = () => {
+      setFeedPosts([])
+      setPageNum(0)
+      setTimeBorders(INIT_TIME)
+      setFirstLoadDone(false)
+      setChosenChannelCode(channelCode)
+      setNoMorePosts(false)
+    }
+
+    const captionStyle = expanded ? '' : styles.truncatedCaption
+
+    return (
+      <div key={id ? id : index} className={styles.post} >
+        {mode === 'pinned' && <p className={["colorGray", styles.pinnedLabel].join(' ')}>Pinned</p>}
+        <p><a href={url} target="_blank" rel="noopener noreferrer">{title ? title : url}</a><span className="colorGray">&nbsp;&nbsp;&nbsp;({domainName})</span></p>
+
+
+        {caption &&
+          <div>
+            <div className={styles.captionArea}>
+              <div className={styles.captionHolder}>
+                <p className={captionStyle}
+                  onClick={() => setExpanded(true)}
+                >
+                  <img alt="website-owner-pic" src={photo} className={styles.photo} />
+                  {caption}
+                </p>
+
+                {/* {expanded ?
+                  <p className={styles.caption}>{caption}</p>
+                  :
+                  <Truncate lines={3} ellipsis={<span  className={[styles.moreButton, "colorGray"].join(' ')}>... More</span>}>
+                    {caption}
+                  </Truncate>
+                } */}
+              </div>
+            </div>
+          </div>
+        }
+        <p className="colorGray">
+          {utility.getTimeText(time)}&nbsp;&nbsp;-&nbsp;&nbsp;
+          <span onClick={chooseChannelCode} className={styles.channelCode}>{CHANNEL_NAME_MAP[channelCode]}</span>
+          {showAdd &&
+            (mode === 'pinned' ?
+              <span onClick={() => { removePinned() }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Unpin</span>
+              :
+              <span onClick={() => { setPinned(post) }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Pin</span>)
+          }
+
+        </p>
+      </div >
+    )
+  }
+
   // Render the posts
   const renderPosts = (postsArray: Array<Post>, mode: string) => {
-    return postsArray.map((post: Post, index: number) => {
-      const { id, url, title, caption } = post
-      const channelCode = post.channelCode as string
-      const time = (post.time as number) * 1000
-      const domainName = psl.get(extractHostname(url))
-      if ((SECRET_CHANNELS.includes(channelCode) && !showAdd)
-        || !url
-        || (mode === "feed" && (id === 'pinned' || post.time === pinnedLink.time))
-      ) {
-        return null
-      }
-      const chooseChannelCode = () => {
-        setFeedPosts([])
-        setPageNum(0)
-        setTimeBorders(INIT_TIME)
-        setFirstLoadDone(false)
-        setChosenChannelCode(channelCode)
-        setNoMorePosts(false)
-      }
-      return (
-        <div key={id ? id : index} className={styles.post} >
-          {mode === 'pinned' && <p className={["colorGray", styles.pinnedLabel].join(' ')}>Pinned</p>}
-          <p><a href={url} target="_blank" rel="noopener noreferrer">{title ? title : url}</a><span className="colorGray">&nbsp;&nbsp;&nbsp;({domainName})</span></p>
-          {caption &&
-            <p className={styles.caption}><img alt="brian-pic" src={photo} className={styles.brianImg} />{caption}</p>
-          }
-          <p className="colorGray">
-            {utility.getTimeText(time)}&nbsp;&nbsp;-&nbsp;&nbsp;
-          <span onClick={chooseChannelCode} className={styles.channelCode}>{CHANNEL_NAME_MAP[channelCode]}</span>
-            {showAdd &&
-              (mode === 'pinned' ?
-                <span onClick={() => { removePinned() }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Unpin</span>
-                :
-                <span onClick={() => { setPinned(post) }} className={styles.pinButton}>&nbsp;&nbsp;-&nbsp;&nbsp;Pin</span>)
-            }
-
-          </p>
-        </div >
-      )
-    })
+    return postsArray.map((post: Post, index: number) => <LinkItem post={post} index={index} mode={mode} key={index} />)
   }
 
 
