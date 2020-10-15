@@ -1,4 +1,4 @@
-# Linkfeed
+# Links
 
 A React + AWS web app for you to save, comment on, and show off links. Easily add it your own static website.
 
