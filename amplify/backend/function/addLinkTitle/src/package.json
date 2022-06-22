@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "aws-sdk": "^2.704.0",
-    "got": "^11.3.0",
+    "got": "^11.8.5",
     "metascraper": "^5.12.6",
     "metascraper-description": "^5.11.21",
     "metascraper-image": "^5.11.21",
